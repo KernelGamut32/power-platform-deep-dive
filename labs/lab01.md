@@ -11,65 +11,34 @@
 ## Prerequisites
 
 - You have the **Power Platform admin** or **Dynamics 365 admin** role in the tenant
-- You have enough **Dataverse database capacity** to create a **Sandbox** or **Production** environment
+- You have enough **Dataverse database capacity** to create a **Sandbox** or a **Trial** environment
 - Windows PowerShell 5.1+ (or PowerShell 7+) on your machine.
 
 ---
 
-## Section A — Dataverse essentials
-
-**Goal:** Get hands-on with Dataverse tables to see the data platform used inside environments
-
-1. Open your browser to **<https://make.powerapps.com>**.  
-2. In the **environment picker** (top-right), select any environment you already have access to.
-3. In the left navigation, select **Tables**.
-4. Select **+ New table ▸ Create new tables**, click **Start from blank**, and configure:
-   - **Display name:** `Course Registrations`  
-   - Click **New column ▸ Edit column**
-   - Configure:
-      - **Display name:** `Registration Name`
-      - **Data type:** `Single line of text`
-      - **Format:** `Text`
-   - Add columns (**+ New column**):
-      - **Student Email** – *Text*
-      - **Course Code** – *Text*
-      - **Registration Date** – *Date only*
-      - Select **Save and exit**.
-5. Click **Course Registrations**
-6. Add sample data - Add 2–3 rows (use realistic values).
-7. Explore the table designer:
-   - Show where to manage **Columns**, **Relationships**, **Views**, and **Forms**.  
-   - (Instructor tip) Point out that Dataverse provides rich types, security, and ALM-friendly behavior.
-
-**Checkpoint ✅** You can see your `Course Registrations` table with a few rows of sample data.
-
----
-
-## Section B — Environments: create and secure one properly
+## Section A — Environments: create and secure one properly
 
 **Goal:** Create a new environment with a Dataverse database and restrict access via a security group (best practice).
 
-### B1) Create an Entra security group (≈5–7 min)
+### A1) Create an Entra security group
 
-> You can use either the **Microsoft Entra admin center** or the **Microsoft 365 admin center**. Here we use Entra.
-
-1. Go to **<https://entra.microsoft.com>**.  
+1. Go to **<https://entra.microsoft.com>**.
 2. Navigate to **Groups ▸ All groups ▸ + New group**.
 3. **Group type:** *Security*  
    **Group name:** `PP-DEV-Students`  
-   (Add a description if desired) → **Create**.
-4. Open the new group → **Members ▸ + Add members** → add your student accounts (or test users).  
-5. Note the group’s **Object ID** (you’ll need it for the PowerShell section).
+4. Click **No members selected** and add a few users (e.g., admin account, `Alex Wilber`, `Nestor Wilke`)
+5. Click **Create**
+6. Note the group’s **Object ID** (you’ll need it for the PowerShell section - copy/paste to a local Notepad doc).
 
 ### Notes
 
 - You **can** assign a security group to most environment types, but **not** to the **Default** or **Developer** environment.
 - Assigning a group ensures only intended members get access to the environment’s maker and Dataverse resources.
 
-### B2) Create a new environment with a Dataverse database (≈10–13 min)
+### A2) Create a new environment with a Dataverse database
 
-1. Open **<https://admin.powerplatform.com>** (Power Platform admin center, PPAC).  
-2. Select **Environments** in the left navigation, then **+ New**.
+1. Open **<https://admin.powerplatform.microsoft.com>** (Power Platform admin center, PPAC).  
+2. Click **Manage** and select **Environments** in the left navigation, then **+ New**.
 3. Fill the first page:
    - **Name:** `DEV – Training`  
    - **Region:** choose your tenant’s region (e.g., *United States*)  
@@ -77,29 +46,27 @@
    - **Purpose:** `Hands-on lab environment`  
    - **Add a Dataverse data store:** **Yes**  
    - (If prompted for billing) Leave **Pay-as-you-go/Azure subscription** **Off** for this lab.
-   - Select **Next** (or **Create** then continue into database configuration, depending on UI).
+   - Select **Next**.
 4. Database settings:
    - **Language** and **Currency** (choose appropriate defaults)  
-   - **URL** (unique name for the environment)  
+   - **Security group:** select **PP-DEV-Students** (created above)  
+   - **URL** (unique name for the environment - this is where you could set a custom domain)  
    - **Enable Dynamics 365 apps:** **No** for this lab *(This choice is not reversible later)*  
    - **Deploy sample apps and data:** **No**  
-   - **Security group:** select **PP-DEV-Students** (created above)  
-   - Select **Save** / **Create**.
+   - Select **Save**.
 5. Wait for the environment status to become **Ready** (refresh if needed).
 
 **Checkpoint ✅** You have an environment `DEV – Training` with a Dataverse database and a security group assigned.
 
-> **Instructor tip:** Briefly show **Settings ▸ Users + permissions** and **Dataverse ▸ Security roles** so students see the difference between environment access (via group) and app/data permissions (via roles/teams).
-
 ---
 
-## Section C — Automate environment creation & governance with PowerShell
+## Section B — Automate environment creation & governance with PowerShell
 
 **Goal:** Script environment creation (with a Dataverse database) and verify your work.
 
 > You’ll use the **Microsoft.PowerApps.Administration.PowerShell** and **Microsoft.PowerApps.PowerShell** modules.
 
-### C1) Install modules and sign in (first time only)
+### B1) Install modules and sign in (first time only)
 
 Open **PowerShell** (Run as Administrator is recommended for module install):
 
@@ -112,18 +79,16 @@ Install-Module -Name Microsoft.PowerApps.PowerShell -Scope CurrentUser -Force
 Add-PowerAppsAccount
 ```
 
-### C2) Discover valid locations
+### B2) Discover valid locations
 
 ```powershell
 # See available regions/locations for environment creation
-Get-AdminPowerAppEnvironmentLocations |
-  Sort-Object Name |
-  Select-Object Name, Location
+Get-AdminPowerAppEnvironmentLocations
 ```
 
 Pick a value from the Location column (e.g., unitedstates) for the next step.
 
-### C3) Create a Sandbox environment with a Dataverse database
+### B3) Create a Sandbox environment with a Dataverse database
 
 The `-ProvisionDatabase` switch provisions the Dataverse database at creation time.
 If you create an environment without a database, you can add one later using `New-AdminPowerAppCdsDatabase`.
@@ -131,13 +96,12 @@ If you create an environment without a database, you can add one later using `Ne
 ```powershell
 # --- Customize these variables ---
 $displayName     = "DEV – Training (Automated)"
-$location        = "unitedstates"       # Use a value from C2
-$envSku          = "Sandbox"            # Alternatives: Production, Trial, Developer, etc.
-$language        = "English"            # e.g., English
-$currency        = "USD"                # e.g., USD
-$securityGroupId = "<ObjectId of PP-DEV-Students>"  # From Section B1, step 5
+$location        = "unitedstates"     # Use a value from B2
+$envSku          = "Trial"            # Alternatives: Production, Trial, Developer, etc.
+$language        = (Get-AdminPowerAppCdsDatabaseLanguages -LocationName $location *English*).LanguageName
+$currency        = "USD"
+$securityGroupId = "<ObjectId of PP-DEV-Students>"  # From Section A1, step 5
 # ---------------------------------
-
 # Create environment WITH Dataverse database
 $env = New-AdminPowerAppEnvironment `
   -DisplayName $displayName `
@@ -152,26 +116,44 @@ $env = New-AdminPowerAppEnvironment `
 $env
 ```
 
-Optional (if you created the env without a DB)
+> Navigate to **Settings ▸ Users + permissions** and **Dataverse ▸ Security roles** to see the difference between environment access (via group) and app/data permissions (via roles/teams).
 
-```powershell
-# Add the Dataverse database after environment creation
-New-AdminPowerAppCdsDatabase `
-  -EnvironmentName $env.EnvironmentName `
-  -LanguageName $language `
-  -CurrencyName $currency
-```
+---
 
-### C4) Verify (and optional cleanup)
+## Section C — Dataverse essentials
 
-```powershell
-# List environments you administer
-Get-AdminPowerAppEnvironment |
-  Select-Object DisplayName, EnvironmentName, EnvironmentSku, Location
+**Goal:** Get hands-on with Dataverse tables to see the data platform used inside environments
 
-# (Optional) Remove a lab environment later
-# Remove-AdminPowerAppEnvironment -EnvironmentName <name from the list above>
-```
+1. Open your browser to **<https://make.powerapps.com>**.  
+2. In the **environment picker** (top-right), select any environment you already have access to (e.g., one of those created in earlier steps)
+3. In the left navigation, select **Tables**.
+4. Select **+ New table ▸ Create new tables**, click **Start from blank**, and configure:
+   - **Display name:** `Course Registrations`  
+   - Click **New column ▸ Edit column**
+   - Configure:
+      - **Display name:** `Registration Name`
+      - **Data type:** `Single line of text`
+      - **Format:** `Text`
+      - **Required:** `On`
+   - Add columns (**+ New column**):
+      - **Display name:** `Student Email`
+         - **Data type:** `Single line of text`
+         - **Format:** `Email`
+         - **Required:** `On`
+      - **Display name:** `Course Code`
+         - **Data type:** `Single line of text`
+         - **Format:** `Email`
+         - **Required:** `On`
+      - **Display name:** `Registration Date`
+         - **Data type:** `Date and time`
+         - **Format:** `Date only`
+         - **Required:** `On`
+5. Add sample data - Add 2–3 rows (use realistic values). For example:
+
+![Sample Data](../images/lab01/sample-regs.png)
+
+6. Click **Save and exit**
+7. Click **Course Registrations** in the set of available tables to explore the table designer. In the next lab we will drill into some of these options further.
 
 ---
 
