@@ -116,8 +116,6 @@ $env = New-AdminPowerAppEnvironment `
 $env
 ```
 
-> Navigate to **Settings ▸ Users + permissions** and **Dataverse ▸ Security roles** to see the difference between environment access (via group) and app/data permissions (via roles/teams).
-
 ---
 
 ## Section C — Dataverse essentials
@@ -142,7 +140,7 @@ $env
          - **Required:** `On`
       - **Display name:** `Course Code`
          - **Data type:** `Single line of text`
-         - **Format:** `Email`
+         - **Format:** `Text`
          - **Required:** `On`
       - **Display name:** `Registration Date`
          - **Data type:** `Date and time`
