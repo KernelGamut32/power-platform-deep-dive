@@ -96,15 +96,15 @@ Click **Save and exit**
 
 > Tip: Formula columns use Power Fx; see official limits (e.g., max expression length 1,000 chars, depth 10). Currency handling has caveats; review Learn notes if using currency in formulas.
 
-### 2C) Create a **Rollup** column
+### 2C) Create **Rollup** columns
 
-**Course** → **Columns** → **+** on right-hand side:
+**Session** → **Columns** → **+** on right-hand side:
 
 - **Display name:** _Enrollment Count (rollup)_  
 - **Data type:** _Whole number_
 - **Behavior:** _Rollup_
 - **Column type:** **Rollup** → **Edit** rollup:
-- **Source table:** _Course_ (no hierarchy)
+- **Source table:** _Session_ (no hierarchy)
 - **Related table:** _Enrollment_ (via the relationship you’ll add in Part 3; you can return to complete this after 3A if editor doesn’t yet show it)
 - **Aggregation:** **COUNT** of related _Enrollment_ where **Status = Confirmed**
 - **Save** the rollup definition → **Save** column
@@ -162,8 +162,7 @@ Create two lookups (child → parent), which creates **1:N**:
 - **Display name:** _Parent Course_  
 - **Data type:** **Lookup** → **Related table:** _Course_ → **Save**
 
-2. **Course** → **Settings** (… menu) → enable **Hierarchical** if available, or use the out-of-box hierarchy settings in the environment.  
-3. Add **Parent Course** to the Course main form.
+2. Add **Parent Course** to the Course main form. Click **Save and publish**.
 
 > Hierarchies work over a **self-referencing 1:N**; rollups can optionally aggregate over hierarchies (mind the depth/row limits if you toggle that later).
 
@@ -178,7 +177,7 @@ Create a **Customer** type column on **Enrollment** so an enrollment can be tied
 - **Display name:** _Customer_  
 - **Data type:** **Customer** (multi-table lookup: Account or Contact) → **Save**
 
-2. Add **Customer** to the Enrollment main form.
+2. Add **Customer** to the Enrollment main form. Click **Save and publish**.
 
 > **Customer** is a native **polymorphic** lookup (multi-table) in Dataverse (like **Owner**), and tables can include zero, one, or more Customer columns.
 
@@ -198,7 +197,7 @@ Create a **Customer** type column on **Enrollment** so an enrollment can be tied
 
 3. **Course** main form:
 
-- Add fields: _Course Name, Base Price, Capacity, Is Virtual?, Difficulty, Enrollment Count (rollup), Parent Course_  
+- Add fields: _Course Name, Base Price, Capacity, Is Virtual?, Difficulty, Parent Course_  
 - Add a **related** subgrid for **Sessions** (shows the 1:N)
 - Add a **related** subgrid for **Contacts** (Instructors) from the N:N relationship
 
@@ -295,5 +294,5 @@ Create a **Customer** type column on **Enrollment** so an enrollment can be tied
 ## Extension ideas (if you finish early)
 
 - Add a **rollup** on **Course** to **AVG** Session Duration across its Sessions. (Remember: rollups only aggregate over **1:N**.)
-- Add a **model-driven app chart** grouping Enrollments by **Customer**.
 - Add **business rules** to default Session **Duration** based on Course **Difficulty**.
+- Use a Power Automate flow to copy the Enrollment count (rollup) value to a new column in the Session table and then use that column to sum total enrollment count for a course (you can't create a rollup that uses another rollup so the flow helps us complete)
